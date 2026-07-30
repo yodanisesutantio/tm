@@ -2,24 +2,33 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Product;
+use App\Models\M90CAF9;
 use Illuminate\Http\Request;
 
 class HubController extends Controller
 {
-    public function index(Request $request)
+    public function index(Request $request, ProductsController $productsController)
     {
         $activeTab = $request->query('tab', 'transactions');
-        $products = null;
-        $editingProduct = null;
+
+        $data = [
+            'activeTab'      => $activeTab,
+            'products'       => collect(),
+            'totalProducts'  => 0,
+            'categories'     => ['Barang Jadi', 'Bahan Baku', 'Aset', 'Material'],
+            'search'         => null,
+            'editingProduct' => null,
+        ];
 
         if ($activeTab === 'products') {
-            // $products = Product::latest()->paginate(10);
-            // if ($request->has('edit')) {
-            //     $editingProduct = Product::find($request->query('edit'));
-            // }
+            $productData = $productsController->getProductsData($request);
+            $data = array_merge($data, $productData);
+
+            if ($request->filled('edit')) {
+                $data['editingProduct'] = M90CAF9::where('uuid', $request->query('edit'))->first();
+            }
         }
 
-        return view('app', compact('activeTab', 'products', 'editingProduct'));
+        return view('app', $data);
     }
 }
