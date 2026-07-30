@@ -87,6 +87,7 @@
                     placeholder="PRD-001"
                     maxlength="64"
                     required
+                    :disabled="isset($editingCustomer)"
                 />
 
                 <x-input
@@ -141,18 +142,30 @@
     <form method="GET" action="{{ route('hub') }}" class="flex flex-col sm:flex-row items-center justify-between gap-3">
         <input type="hidden" name="tab" value="products" />
 
-        <div class="relative w-full sm:w-72">
-            <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-            </svg>
-            <input
-                type="text"
-                name="search"
-                value="{{ $search ?? request('search') }}"
-                placeholder="Cari kode atau nama..."
-                onchange="this.form.submit()"
-                class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-emerald-500"
-            />
+        <div class="flex items-center justify-between gap-2 w-full">
+            <div class="relative w-full sm:w-72">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input
+                    type="text"
+                    name="search"
+                    value="{{ $search ?? request('search') }}"
+                    placeholder="Cari kode atau nama..."
+                    onchange="this.form.submit()"
+                    class="w-full rounded-lg border border-slate-200 bg-white pl-9 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:border-emerald-500"
+                />
+            </div>
+
+            <a
+                href="{{ route('hub', ['tab' => 'products']) }}"
+                title="Reload Data"
+                class="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white p-2 text-slate-500 hover:bg-slate-50 hover:text-slate-700 transition-colors focus:outline-none focus:ring-2 focus:ring-emerald-500/50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+            >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M20.985 19.644v-4.992m0 0h-4.992m4.992 0L17.51 12.01a8.25 8.25 0 10-2.481 5.922" />
+                </svg>
+            </a>
         </div>
     </form>
 
@@ -199,8 +212,14 @@
             @endforelse
         </x-table>
 
-        <div class="mt-4">
-            {{ $products->links() }}
-        </div>
+        @if($products->hasPages() || $products->total() > 0)
+            <x-pagination
+                :from="$products->firstItem() ?? 0"
+                :to="$products->lastItem() ?? 0"
+                :total="$products->total()"
+                :current-page="$products->currentPage()"
+                :last-page="$products->lastPage()"
+            />
+        @endif
     </div>
 </div>

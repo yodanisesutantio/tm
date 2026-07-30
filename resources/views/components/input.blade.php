@@ -23,15 +23,15 @@
     @endif
 
     <div class="relative w-full">
-        <input 
-            {{ $disabled ? 'disabled' : '' }} 
+        <input
+            {{ $disabled ? 'disabled' : '' }}
             {{ $required ? 'required' : '' }}
-            type="{{ $type }}" 
+            type="{{ $type }}"
             id="{{ $id ?? $name }}"
-            name="{{ $name }}" 
+            name="{{ $name }}"
             value="{{ old($name, $value) }}"
-            @if($maxlength) 
-                maxlength="{{ $maxlength }}" 
+            @if($maxlength)
+                maxlength="{{ $maxlength }}"
                 oninput="
                     (function(el) {
                         const countEl = document.getElementById('{{ $counterId }}');
@@ -48,17 +48,18 @@
                 "
             @endif
             {{ $attributes->merge([
-                'class' => 'w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 ' . 
+                'class' => 'w-full rounded-lg border px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500/50 ' .
+                'disabled:bg-slate-100 disabled:text-slate-500 disabled:border-slate-300 disabled:cursor-not-allowed disabled:shadow-none dark:disabled:bg-slate-800/60 dark:disabled:text-slate-400 dark:disabled:border-slate-700/80 ' .
                 ($maxlength ? 'pr-16 ' : '') .
-                ($error 
-                    ? 'border-red-500 bg-red-50/50 text-red-900 focus:border-red-500 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300' 
+                ($error
+                    ? 'border-red-500 bg-red-50/50 text-red-900 focus:border-red-500 dark:border-red-800 dark:bg-red-950/20 dark:text-red-300'
                     : 'border-slate-200 bg-white text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100')
             ]) }}
         />
 
         @if($maxlength)
-            <div 
-                id="{{ $counterId }}" 
+            <div
+                id="{{ $counterId }}"
                 class="pointer-events-none absolute right-2.5 bottom-2 text-[10px] font-medium tracking-tight text-slate-400 dark:text-slate-500 {{ $currentLength >= $maxlength ? 'text-amber-500 dark:text-amber-400 font-bold' : '' }}"
             >
                 <span class="current-count">{{ $currentLength }}</span>/{{ $maxlength }}

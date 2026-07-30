@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\M90CAF9;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
-use Illuminate\Validation\Rule;
 
 class ProductsController extends Controller
 {
