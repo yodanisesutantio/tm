@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\M5D3140;
+use App\Models\MA56F63;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -66,8 +67,16 @@ class CustomersController extends Controller
 
     public function deleteCustomersData(string $uuid)
     {
-        $item = M5D3140::where('uuid', $uuid)->firstOrFail();
-        $item->delete();
+        $customer = M5D3140::where('uuid', $uuid)->firstOrFail();
+
+        $hasTransactions = MA56F63::where('cust_uuid', $customer->uuid)->exists();
+
+        if ($hasTransactions) {
+            return redirect()->route('hub', ['tab' => 'customers'])
+                ->with('error', 'Pelanggan tidak bisa dihapus karena sudah memiliki riwayat transaksi.');
+        }
+
+        $customer->delete();
 
         return redirect()->route('hub', ['tab' => 'customers'])
             ->with('success', 'Pelanggan berhasil dihapus!');

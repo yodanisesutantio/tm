@@ -15,19 +15,53 @@
         </div>
     @endif
 
+    @if(session('error'))
+        <div id="alert-error" class="flex items-center justify-between rounded-xl border border-rose-200 bg-rose-50/80 p-4 text-sm text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-400">
+            <div class="flex items-center gap-2">
+                <svg class="h-5 w-5 flex-shrink-0 text-rose-600 dark:text-rose-400" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <span>{{ session('error') }}</span>
+            </div>
+            <button type="button" onclick="document.getElementById('alert-error').remove()" class="text-rose-600 hover:text-rose-800 dark:text-rose-400 dark:hover:text-rose-200">
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+    @endif
+
     <div id="view-list" class="space-y-4">
         <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
             <div>
                 <h2 class="text-xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Daftar Transaksi Penjualan</h2>
-                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kelola dan lihat histori riwayat transaksi invoice.</p>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Kelola dan lihat histori riwayat transaksi invoice (Total: {{ $totalTransactions }}).</p>
             </div>
-            <button type="button" id="btn-show-form" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors">
+            <button type="button" id="btn-show-form" class="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-emerald-500 transition-colors">
                 <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
                 Transaksi Baru
             </button>
         </div>
+
+        <form method="GET" action="{{ route('hub') }}" class="flex items-center gap-2">
+            <input type="hidden" name="tab" value="transactions">
+            <div class="relative flex-1">
+                <input type="text" name="search" value="{{ $search }}" placeholder="Cari No Invoice / Nama Customer..." class="w-full rounded-lg border border-slate-200 bg-white px-3.5 py-2 pl-9 text-xs text-slate-900 placeholder:text-slate-400 focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100">
+                <svg class="absolute left-3 top-2.5 h-4 w-4 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+            </div>
+            <button type="submit" class="rounded-lg bg-slate-800 px-4 py-2 text-xs font-semibold text-white hover:bg-slate-700 dark:bg-slate-700 dark:hover:bg-slate-600">
+                Cari
+            </button>
+            @if($search)
+                <a href="{{ route('hub', ['tab' => 'transactions']) }}" class="rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
+                    Reset
+                </a>
+            @endif
+        </form>
 
         <div class="overflow-x-auto rounded-xl border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 shadow-sm">
             <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
@@ -41,21 +75,47 @@
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-200 dark:divide-slate-800">
-                    <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
-                        <td class="p-3 font-semibold text-slate-900 dark:text-slate-100">INV/20260330/801</td>
-                        <td class="p-3">30 Mar 2026</td>
-                        <td class="p-3">
-                            <div class="font-medium text-slate-900 dark:text-slate-100">PT Kopi Nusantara</div>
-                            <div class="text-[10px] text-slate-400">CUST-001</div>
-                        </td>
-                        <td class="p-3 text-right font-bold text-emerald-600 dark:text-emerald-400">Rp 1.425.000</td>
-                        <td class="p-3 text-center">
-                            <button type="button" class="text-slate-500 hover:text-emerald-600 font-medium">Detail</button>
-                        </td>
-                    </tr>
+                    @forelse($transactions as $trx)
+                        <tr class="hover:bg-slate-50/50 dark:hover:bg-slate-800/40">
+                            <td class="p-3 font-semibold text-slate-900 dark:text-slate-100">{{ $trx->no_inv }}</td>
+                            <td class="p-3">{{ \Carbon\Carbon::parse($trx->inv_date)->format('d M Y') }}</td>
+                            <td class="p-3">
+                                <div class="font-medium text-slate-900 dark:text-slate-100">{{ $trx->cust_name }}</div>
+                                <div class="text-[10px] text-slate-400">{{ $trx->cust_code }}</div>
+                            </td>
+                            <td class="p-3 text-right font-bold text-emerald-600 dark:text-emerald-400">
+                                Rp {{ number_format($trx->total, 0, ',', '.') }}
+                            </td>
+                            <td class="p-3 text-center flex items-center justify-center gap-2">
+                                <button type="button" onclick="viewTransactionDetail({{ json_encode($trx) }})" class="text-slate-500 hover:text-emerald-600 font-medium">
+                                    Detail
+                                </button>
+                                <span class="text-slate-300">|</span>
+                                <form action="{{ route('transactions.delete', $trx->uuid) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus transaksi ini? Stok akan dikembalikan ke master produk.')">
+                                    @csrf
+                                    @method('DELETE')
+                                    <button type="submit" class="text-rose-500 hover:text-rose-700 font-medium">
+                                        Hapus
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="5" class="p-6 text-center text-slate-400">
+                                Belum ada transaksi ditemukan.
+                            </td>
+                        </tr>
+                    @endforelse
                 </tbody>
             </table>
         </div>
+
+        @if($transactions->hasPages())
+            <div class="pt-2">
+                {{ $transactions->links() }}
+            </div>
+        @endif
     </div>
 
     <div id="view-form" class="space-y-6 hidden">
@@ -69,7 +129,7 @@
             </button>
         </div>
 
-        <form id="transaction-form" method="POST" action="#" class="space-y-6">
+        <form id="transaction-form" method="POST" action="{{ route('transactions.save') }}" class="space-y-6">
             @csrf
 
             <div class="rounded-xl border border-slate-200 bg-slate-50/50 p-5 dark:border-slate-800 dark:bg-slate-900/50 space-y-4">
@@ -83,53 +143,40 @@
                         Header Informasi Transaksi
                     </h3>
                 </div>
-            
-                @php
-                    $customerOptions = [
-                        [
-                            'value' => 'CUST-001',
-                            'label' => 'CUST-001 - PT Kopi Nusantara',
-                            'data' => [
-                                'name' => 'PT Kopi Nusantara',
-                                'address' => 'Jl. Jend. Sudirman No. 45, Jakarta Selatan'
-                            ]
-                        ],
-                        [
-                            'value' => 'CUST-002',
-                            'label' => 'CUST-002 - Budi Santoso',
-                            'data' => [
-                                'name' => 'Budi Santoso',
-                                'address' => 'Jl. Dago No. 112, Bandung'
-                            ]
-                        ],
-                        [
-                            'value' => 'CUST-003',
-                            'label' => 'CUST-003 - CV Cahaya Abadi',
-                            'data' => [
-                                'name' => 'CV Cahaya Abadi',
-                                'address' => 'Jl. Pemuda No. 88, Semarang'
-                            ]
-                        ]
-                    ];
-                @endphp
-            
+
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <x-input label="No. Invoice" name="no_inv" id="no_inv_input" readonly required />
-                    <x-input label="Tanggal Invoice" name="inv_date" type="date" value="{{ date('Y-m-d') }}" required />
-            
-                    <x-select 
-                        label="Pilih Customer" 
-                        name="cust_code" 
-                        id="cust_code_select" 
-                        placeholder="-- Pilih Customer --"
-                        :options="$customerOptions" 
-                        required 
-                    />
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">No. Invoice</label>
+                        <input type="text" name="no_inv" id="no_inv_input" value="{{ $nextNoInv }}" readonly class="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Tanggal Invoice</label>
+                        <input type="date" name="inv_date" value="{{ date('Y-m-d') }}" required class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none">
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Pilih Customer</label>
+                        <select name="cust_code" id="cust_code_select" required class="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 focus:border-emerald-500 focus:outline-none">
+                            <option value="">-- Pilih Customer --</option>
+                            @foreach($customerOptions as $opt)
+                                <option value="{{ $opt['value'] }}" data-name="{{ $opt['data']['name'] }}" data-address="{{ $opt['data']['address'] }}">
+                                    {{ $opt['label'] }}
+                                </option>
+                            @endforeach
+                        </select>
+                    </div>
                 </div>
-            
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                    <x-input label="Nama Customer" id="cust_name_input" name="cust_name" placeholder="Otomatis terisi..." readonly required />
-                    <x-input label="Alamat Customer" id="cust_address_input" name="cust_address" placeholder="Otomatis terisi..." readonly required />
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Nama Customer</label>
+                        <input type="text" id="cust_name_input" name="cust_name" placeholder="Otomatis terisi..." readonly class="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 focus:outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 dark:text-slate-300 mb-1">Alamat Customer</label>
+                        <input type="text" id="cust_address_input" name="cust_address" placeholder="Otomatis terisi..." readonly class="w-full rounded-lg border border-slate-200 bg-slate-100 px-3 py-2 text-xs text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300 focus:outline-none">
+                    </div>
                 </div>
             </div>
 
@@ -211,15 +258,14 @@
     <div class="w-full max-w-md rounded-xl border border-slate-200 bg-white p-5 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-4">
         <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
             <h3 class="text-sm font-bold text-slate-900 dark:text-slate-100">Atur Diskon Bertingkat</h3>
-            <button type="button" id="btn-close-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">&times;</button>
+            <button type="button" id="btn-close-modal" class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-lg">&times;</button>
         </div>
 
         <p class="text-xs text-slate-500 dark:text-slate-400">
             Tambahkan potongan bertingkat secara berurutan (% atau Rp).
         </p>
 
-        <div id="modal-discounts-container" class="space-y-2.5 max-h-60 overflow-y-auto pr-1">
-        </div>
+        <div id="modal-discounts-container" class="space-y-2.5 max-h-60 overflow-y-auto pr-1"></div>
 
         <button type="button" id="btn-add-discount-tier" class="w-full py-2 border-2 border-dashed border-slate-200 dark:border-slate-800 hover:border-emerald-500 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-emerald-600 transition-colors">
             + Tambah Skema Diskon
@@ -233,401 +279,299 @@
     </div>
 </div>
 
-<script>
-    const MASTER_PRODUCTS = [
-        { code: 'PRD-001', name: 'Kopi Arabika Specialty 250g', price: 85000, stock: 45 },
-        { code: 'PRD-002', name: 'Susu Oat Milk 1L', price: 42500, stock: 5 },
-        { code: 'PRD-003', name: 'Syrup Vanilla 750ml', price: 120000, stock: 12 },
-        { code: 'PRD-004', name: 'Paper Cup 12oz Pack', price: 35000, stock: 100 }
-    ];
-</script>
+<div id="detail-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm hidden">
+    <div class="w-full max-w-2xl rounded-xl border border-slate-200 bg-white p-6 shadow-2xl dark:border-slate-800 dark:bg-slate-900 space-y-4">
+        <div class="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-3">
+            <h3 class="text-base font-bold text-slate-900 dark:text-slate-100">Detail Transaksi <span id="detail-modal-noinv" class="text-emerald-600"></span></h3>
+            <button type="button" onclick="document.getElementById('detail-modal').classList.add('hidden')" class="text-slate-400 hover:text-slate-600 text-lg">&times;</button>
+        </div>
+
+        <div class="grid grid-cols-2 gap-4 text-xs">
+            <div>
+                <p class="text-slate-400">Customer:</p>
+                <p id="detail-modal-cust" class="font-semibold text-slate-800 dark:text-slate-200"></p>
+            </div>
+            <div>
+                <p class="text-slate-400">Tanggal:</p>
+                <p id="detail-modal-date" class="font-semibold text-slate-800 dark:text-slate-200"></p>
+            </div>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs text-slate-700 dark:text-slate-300">
+                <thead class="bg-slate-50 dark:bg-slate-800 text-[11px] uppercase">
+                    <tr>
+                        <th class="p-2">Produk</th>
+                        <th class="p-2 text-center">Qty</th>
+                        <th class="p-2 text-right">Harga</th>
+                        <th class="p-2 text-right">Net Price</th>
+                        <th class="p-2 text-right">Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody id="detail-modal-tbody" class="divide-y divide-slate-200 dark:divide-slate-800"></tbody>
+            </table>
+        </div>
+
+        <div class="flex justify-between items-center text-sm font-bold pt-2 border-t border-slate-200 dark:border-slate-800">
+            <span>Grand Total:</span>
+            <span id="detail-modal-total" class="text-emerald-600"></span>
+        </div>
+    </div>
+</div>
 
 <script>
-document.addEventListener('DOMContentLoaded', () => {
+    const availableProducts = @json($products);
+
+    let itemRowIndex = 0;
+    let activeEditingRowIndex = null;
+    let activeDiscountsMap = {};
+
     const viewList = document.getElementById('view-list');
     const viewForm = document.getElementById('view-form');
     const btnShowForm = document.getElementById('btn-show-form');
     const btnShowList = document.getElementById('btn-show-list');
     const btnCancelForm = document.getElementById('btn-cancel-form');
-    const btnAddItem = document.getElementById('btn-add-item');
-
-    if (btnShowForm) {
-        btnShowForm.addEventListener('click', () => {
-            const targetNoInv = getRealInputElement('no_inv_input', 'no_inv');
-            
-            if (targetNoInv) {
-                targetNoInv.value = 'INV/' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '/' + Math.floor(100 + Math.random() * 900);
-            }
-
-            if (viewList && viewForm) {
-                viewList.classList.add('hidden');
-                viewForm.classList.remove('hidden');
-            }
-        });
-    }
-
-    function showList() {
-        if (viewForm && viewList) {
-            viewForm.classList.add('hidden');
-            viewList.classList.remove('hidden');
-        }
-    }
-
-    if (btnShowList) btnShowList.addEventListener('click', showList);
-    if (btnCancelForm) btnCancelForm.addEventListener('click', showList);
-
-    function handleCustomerChange(e) {
-        const target = e.target;
-        
-        if (target && (target.id === 'cust_code_select' || target.name === 'cust_code')) {
-            const custNameInput = getRealInputElement('cust_name_input', 'cust_name');
-            const custAddressInput = getRealInputElement('cust_address_input', 'cust_address');
-
-            let customerData = null;
-
-            if (e.detail && e.detail.data) {
-                customerData = e.detail.data;
-            } 
-            else if (target.dataset && target.dataset.selectedData) {
-                try {
-                    customerData = typeof target.dataset.selectedData === 'string' 
-                        ? JSON.parse(target.dataset.selectedData) 
-                        : target.dataset.selectedData;
-                } catch (err) {
-                    console.error('Failed to parse customer dataset:', err);
-                }
-            }
-
-            if (customerData) {
-                if (custNameInput) custNameInput.value = customerData.name || '';
-                if (custAddressInput) custAddressInput.value = customerData.address || '';
-            } else {
-                if (custNameInput) custNameInput.value = '';
-                if (custAddressInput) custAddressInput.value = '';
-            }
-        }
-    }
-
-    document.addEventListener('change', handleCustomerChange);
-    document.addEventListener('select-change', handleCustomerChange);
-    document.addEventListener('customer-selected', handleCustomerChange);
-
-    function getRealInputElement(id, name) {
-        let el = document.getElementById(id);
-        if (el && el.tagName !== 'INPUT') {
-            el = el.querySelector('input') || el;
-        }
-        if (!el || el.tagName !== 'INPUT') {
-            el = document.querySelector(`input[name="${name}"]`);
-        }
-        return el;
-    }
-
-    if (btnAddItem) {
-        btnAddItem.addEventListener('click', () => {
-            if (typeof addRow === 'function') {
-                addRow();
-            } else {
-                console.warn('addRow function is not defined yet.');
-            }
-        });
-    }
-});
-document.addEventListener('DOMContentLoaded', () => {
-    const viewList = document.getElementById('view-list');
-    const viewForm = document.getElementById('view-form');
-    const btnShowForm = document.getElementById('btn-show-form');
-    const btnShowList = document.getElementById('btn-show-list');
-    const btnCancelForm = document.getElementById('btn-cancel-form');
-
-    const noInvInput = document.getElementById('no_inv_input');
-    const custSelect = document.getElementById('cust_code_select');
+    const custCodeSelect = document.getElementById('cust_code_select');
     const custNameInput = document.getElementById('cust_name_input');
     const custAddressInput = document.getElementById('cust_address_input');
-    const tableBody = document.getElementById('detail-items-body');
+    const detailItemsBody = document.getElementById('detail-items-body');
     const emptyNotice = document.getElementById('empty-table-notice');
     const btnAddItem = document.getElementById('btn-add-item');
-    const summaryGrandTotal = document.getElementById('summary-grand-total');
-    const summaryTotalItems = document.getElementById('summary-total-items');
-    const headerTotalInput = document.getElementById('header_total_input');
 
-    const modal = document.getElementById('discount-modal');
-    const btnCloseModal = document.getElementById('btn-close-modal');
-    const btnApplyDiscounts = document.getElementById('btn-apply-discounts');
-    const btnAddDiscountTier = document.getElementById('btn-add-discount-tier');
-    const modalContainer = document.getElementById('modal-discounts-container');
+    btnShowForm.addEventListener('click', () => {
+        viewList.classList.add('hidden');
+        viewForm.classList.remove('hidden');
+    });
 
-    let rowCounter = 0;
-    let activeRowForDiscount = null;
-
-    if (btnShowForm) {
-        btnShowForm.addEventListener('click', () => {
-            const targetNoInv = document.getElementById('no_inv_input') || document.querySelector('input[name="no_inv"]');
-            
-            if (targetNoInv) {
-                targetNoInv.value = 'INV/' + new Date().toISOString().slice(0,10).replace(/-/g,'') + '/' + Math.floor(100 + Math.random() * 900);
-            }
-
-            if (viewList && viewForm) {
-                viewList.classList.add('hidden');
-                viewForm.classList.remove('hidden');
-            }
-        });
-    }
-
-    function showList() {
+    const hideForm = () => {
         viewForm.classList.add('hidden');
         viewList.classList.remove('hidden');
-    }
+    };
+    btnShowList.addEventListener('click', hideForm);
+    btnCancelForm.addEventListener('click', hideForm);
 
-    btnShowList.addEventListener('click', showList);
-    btnCancelForm.addEventListener('click', showList);
+    custCodeSelect.addEventListener('change', function () {
+        const selectedOption = this.options[this.selectedIndex];
+        if (this.value) {
+            custNameInput.value = selectedOption.getAttribute('data-name') || '';
+            custAddressInput.value = selectedOption.getAttribute('data-address') || '';
+        } else {
+            custNameInput.value = '';
+            custAddressInput.value = '';
+        }
+    });
 
-    btnAddItem.addEventListener('click', () => addRow());
-
-    function addRow() {
-        rowCounter++;
-        const detailId = 'DET-' + Date.now() + '-' + rowCounter;
+    btnAddItem.addEventListener('click', () => {
+        emptyNotice.classList.add('hidden');
+        const idx = itemRowIndex++;
+        activeDiscountsMap[idx] = [];
 
         const tr = document.createElement('tr');
-        tr.className = 'item-row hover:bg-slate-50/50 dark:hover:bg-slate-800/40 transition-colors';
-        tr.id = `row-${rowCounter}`;
+        tr.id = `item-row-${idx}`;
+        tr.className = "hover:bg-slate-50/50 dark:hover:bg-slate-800/40";
+
+        let productOptionsHtml = `<option value="">-- Pilih Produk --</option>`;
+        availableProducts.forEach(p => {
+            productOptionsHtml += `<option value="${p.code}" data-price="${p.price}" data-stock="${p.stock}">${p.code} - ${p.name}</option>`;
+        });
 
         tr.innerHTML = `
-            <td class="p-2">
-                <input type="hidden" name="details[${rowCounter}][detail_id]" value="${detailId}" />
-                <input type="hidden" name="details[${rowCounter}][product_name]" class="row-product-name" />
-                <input type="hidden" name="details[${rowCounter}][discounts_json]" class="row-discounts-json" value="[]" />
-                
-                <select name="details[${rowCounter}][product_code]" class="row-product-select w-full rounded-md border border-slate-200 bg-white p-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" required>
-                    <option value="">-- Pilih Produk --</option>
-                    ${MASTER_PRODUCTS.map(p => `
-                        <option value="${p.code}" data-name="${p.name}" data-price="${p.price}" data-stock="${p.stock}">
-                            ${p.code} - ${p.name}
-                        </option>
-                    `).join('')}
+            <td class="p-2.5">
+                <select name="details[${idx}][product_code]" class="w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs product-select focus:border-emerald-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900" required>
+                    ${productOptionsHtml}
                 </select>
             </td>
-            <td class="p-2 text-center font-medium">
-                <span class="row-stock-label text-slate-500 dark:text-slate-400">-</span>
+            <td class="p-2.5 text-center font-semibold text-slate-500 stock-cell">-</td>
+            <td class="p-2.5">
+                <input type="number" name="details[${idx}][qty]" value="1" min="1" class="w-full rounded-lg border border-slate-200 px-2 py-1 text-xs qty-input text-center focus:border-emerald-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900" required>
             </td>
-            <td class="p-2">
-                <input type="number" name="details[${rowCounter}][qty]" class="row-qty w-full rounded-md border border-slate-200 bg-white p-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" min="1" value="1" required disabled />
-                <span class="row-qty-error text-[10px] text-red-500 hidden font-semibold">Max stok terlampaui!</span>
+            <td class="p-2.5">
+                <input type="number" step="any" name="details[${idx}][price]" value="0" class="w-full rounded-lg border border-slate-200 px-2 py-1 text-xs price-input text-right focus:border-emerald-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900" required>
             </td>
-            <td class="p-2">
-                <input type="number" name="details[${rowCounter}][price]" class="row-price w-full rounded-md border border-slate-200 bg-white p-1.5 text-xs text-slate-900 focus:border-emerald-500 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" min="0" value="0" required disabled />
-            </td>
-            <td class="p-2 text-center">
-                <button type="button" class="btn-open-discount border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 hover:bg-emerald-50 dark:hover:bg-emerald-950 px-2.5 py-1.5 rounded-lg text-[11px] font-semibold text-slate-700 dark:text-slate-300 transition-colors inline-flex items-center gap-1">
-                    <span class="row-discount-summary text-emerald-600 dark:text-emerald-400 font-bold">0 Diskon</span>
-                    <svg class="h-3 w-3 text-slate-400" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
-                    </svg>
+            <td class="p-2.5 text-center">
+                <button type="button" onclick="openDiscountModal(${idx})" class="text-xs font-semibold text-emerald-600 hover:underline discount-label">
+                    0 Diskon (Set)
                 </button>
+                <input type="hidden" name="details[${idx}][discounts_json]" id="discounts-json-${idx}" value="[]">
+                <input type="hidden" name="details[${idx}][net_price]" id="net-price-input-${idx}" value="0">
+                <input type="hidden" name="details[${idx}][subtotal]" id="subtotal-input-${idx}" value="0">
             </td>
-            <td class="p-2 font-medium">
-                <input type="hidden" name="details[${rowCounter}][net_price]" class="row-net-price-input" value="0" />
-                <span class="row-net-price-label text-slate-700 dark:text-slate-300">Rp 0</span>
-            </td>
-            <td class="p-2 font-semibold">
-                <input type="hidden" name="details[${rowCounter}][subtotal]" class="row-subtotal-input" value="0" />
-                <span class="row-subtotal-label text-emerald-600 dark:text-emerald-400">Rp 0</span>
-            </td>
-            <td class="p-2 text-center">
-                <button type="button" class="btn-remove-row text-slate-400 hover:text-red-500 transition-colors">
-                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                    </svg>
-                </button>
+            <td class="p-2.5 font-semibold text-slate-700 dark:text-slate-300 net-price-cell">Rp 0</td>
+            <td class="p-2.5 font-bold text-emerald-600 dark:text-emerald-400 subtotal-cell">Rp 0</td>
+            <td class="p-2.5 text-center">
+                <button type="button" onclick="removeItemRow(${idx})" class="text-rose-500 hover:text-rose-700 text-base font-bold">&times;</button>
             </td>
         `;
 
-        tableBody.appendChild(tr);
-        checkEmptyState();
-        attachRowEvents(tr);
-    }
+        detailItemsBody.appendChild(tr);
 
-    function attachRowEvents(row) {
-        const productSelect = row.querySelector('.row-product-select');
-        const productNameInput = row.querySelector('.row-product-name');
-        const stockLabel = row.querySelector('.row-stock-label');
-        const qtyInput = row.querySelector('.row-qty');
-        const qtyError = row.querySelector('.row-qty-error');
-        const priceInput = row.querySelector('.row-price');
-        const btnOpenDiscount = row.querySelector('.btn-open-discount');
-        const btnRemove = row.querySelector('.btn-remove-row');
+        const select = tr.querySelector('.product-select');
+        const qtyInput = tr.querySelector('.qty-input');
+        const priceInput = tr.querySelector('.price-input');
 
-        productSelect.addEventListener('change', () => {
-            const opt = productSelect.options[productSelect.selectedIndex];
-            if (opt.value) {
-                const stock = parseInt(opt.dataset.stock) || 0;
-                const price = parseFloat(opt.dataset.price) || 0;
+        select.addEventListener('change', () => {
+            const opt = select.options[select.selectedIndex];
+            const stock = opt.getAttribute('data-stock') || '-';
+            const price = opt.getAttribute('data-price') || 0;
+            tr.querySelector('.stock-cell').textContent = stock;
+            priceInput.value = price;
 
-                productNameInput.value = opt.dataset.name;
-                stockLabel.textContent = stock;
-                priceInput.value = price;
-                
-                qtyInput.disabled = false;
-                priceInput.disabled = false;
-                qtyInput.max = stock;
-                
-                if (stock <= 0) {
-                    qtyInput.value = 0;
-                    qtyInput.disabled = true;
-                    stockLabel.className = 'row-stock-label text-red-500 font-bold';
-                } else {
-                    qtyInput.value = 1;
-                    stockLabel.className = 'row-stock-label text-slate-700 dark:text-slate-300';
-                }
-
-                validateAndCalculateRow(row);
-            } else {
-                stockLabel.textContent = '-';
-                qtyInput.value = 1;
-                priceInput.value = 0;
-                qtyInput.disabled = true;
-                priceInput.disabled = true;
-                validateAndCalculateRow(row);
-            }
-        });
-
-        qtyInput.addEventListener('input', () => {
-            const maxStock = parseInt(qtyInput.max) || 0;
-            let currentQty = parseInt(qtyInput.value) || 0;
-
-            if (currentQty > maxStock) {
-                qtyInput.value = maxStock;
-                qtyError.classList.remove('hidden');
-                setTimeout(() => qtyError.classList.add('hidden'), 2500);
-            } else {
-                qtyError.classList.add('hidden');
+            if (stock !== '-') {
+                qtyInput.setAttribute('max', stock);
             }
 
-            validateAndCalculateRow(row);
+            recalculateRow(idx);
         });
 
-        priceInput.addEventListener('input', () => validateAndCalculateRow(row));
+        qtyInput.addEventListener('input', () => recalculateRow(idx));
+        priceInput.addEventListener('input', () => recalculateRow(idx));
+    });
 
-        btnOpenDiscount.addEventListener('click', () => openDiscountModal(row));
-
-        btnRemove.addEventListener('click', () => {
-            row.remove();
-            checkEmptyState();
-            calculateGrandTotal();
-        });
+    function removeItemRow(idx) {
+        document.getElementById(`item-row-${idx}`).remove();
+        delete activeDiscountsMap[idx];
+        if (detailItemsBody.children.length === 0) {
+            emptyNotice.classList.remove('hidden');
+        }
+        recalculateTotals();
     }
 
-    function openDiscountModal(row) {
-        activeRowForDiscount = row;
-        modalContainer.innerHTML = '';
-        
-        const existingDiscounts = JSON.parse(row.querySelector('.row-discounts-json').value || '[]');
-        if (existingDiscounts.length === 0) {
-            addDiscountTierToModal();
-        } else {
-            existingDiscounts.forEach(d => addDiscountTierToModal(d.type, d.value));
+    function recalculateRow(idx) {
+        const tr = document.getElementById(`item-row-${idx}`);
+        if (!tr) return;
+
+        const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
+        const price = parseFloat(tr.querySelector('.price-input').value) || 0;
+        const stockCell = tr.querySelector('.stock-cell');
+        const stock = parseInt(stockCell.textContent) || 0;
+
+        if (stockCell.textContent !== '-' && qty > stock) {
+            alert(`Stok tidak mencukupi! Maksimal stok tersedia adalah ${stock}`);
+            tr.querySelector('.qty-input').value = stock;
+            return recalculateRow(idx);
         }
 
-        modal.classList.remove('hidden');
+        const discounts = activeDiscountsMap[idx] || [];
+        let currentPrice = price;
+
+        discounts.forEach(d => {
+            const val = parseFloat(d.value) || 0;
+            if (d.type === 'percent') {
+                currentPrice = currentPrice - (currentPrice * (val / 100));
+            } else if (d.type === 'nominal') {
+                currentPrice = Math.max(0, currentPrice - val);
+            }
+        });
+
+        const netPrice = currentPrice;
+        const subtotal = netPrice * qty;
+
+        tr.querySelector('.net-price-cell').textContent = `Rp ${Math.round(netPrice).toLocaleString('id-ID')}`;
+        tr.querySelector('.subtotal-cell').textContent = `Rp ${Math.round(subtotal).toLocaleString('id-ID')}`;
+
+        document.getElementById(`net-price-input-${idx}`).value = netPrice;
+        document.getElementById(`subtotal-input-${idx}`).value = subtotal;
+
+        recalculateTotals();
     }
 
-    function addDiscountTierToModal(type = 'percent', value = 0) {
+    function recalculateTotals() {
+        let totalItems = 0;
+        let grandTotal = 0;
+
+        document.querySelectorAll('#detail-items-body tr').forEach(tr => {
+            const qty = parseFloat(tr.querySelector('.qty-input').value) || 0;
+            const subtotal = parseFloat(tr.querySelector('.subtotal-cell').textContent.replace(/[^\d]/g, '')) || 0;
+            totalItems += qty;
+            grandTotal += subtotal;
+        });
+
+        document.getElementById('summary-total-items').textContent = totalItems;
+        document.getElementById('summary-grand-total').textContent = `Rp ${grandTotal.toLocaleString('id-ID')}`;
+        document.getElementById('header_total_input').value = grandTotal;
+    }
+
+    const discountModal = document.getElementById('discount-modal');
+    const modalContainer = document.getElementById('modal-discounts-container');
+
+    function openDiscountModal(idx) {
+        activeEditingRowIndex = idx;
+        modalContainer.innerHTML = '';
+
+        const existingDiscounts = activeDiscountsMap[idx] || [];
+        if (existingDiscounts.length === 0) {
+            addDiscountTierRow();
+        } else {
+            existingDiscounts.forEach(d => addDiscountTierRow(d.type, d.value));
+        }
+
+        discountModal.classList.remove('hidden');
+    }
+
+    document.getElementById('btn-close-modal').addEventListener('click', () => {
+        discountModal.classList.add('hidden');
+    });
+
+    document.getElementById('btn-add-discount-tier').addEventListener('click', () => addDiscountTierRow());
+
+    function addDiscountTierRow(type = 'percent', val = '') {
         const div = document.createElement('div');
-        div.className = 'discount-tier-row flex items-center gap-2';
-
+        div.className = "flex items-center gap-2 modal-discount-tier";
         div.innerHTML = `
-            <select class="tier-type rounded-lg border border-slate-200 bg-slate-50 p-1.5 text-xs text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-800 dark:text-slate-100">
-                <option value="percent" ${type === 'percent' ? 'selected' : ''}>Persen (%)</option>
-                <option value="fixed" ${type === 'fixed' ? 'selected' : ''}>Nominal (Rp)</option>
+            <select class="rounded-lg border border-slate-200 bg-white px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-900 tier-type">
+                <option value="percent" ${type === 'percent' ? 'selected' : ''}>Diskon %</option>
+                <option value="nominal" ${type === 'nominal' ? 'selected' : ''}>Potongan Rp</option>
             </select>
-            <input type="number" class="tier-value w-full rounded-lg border border-slate-200 bg-white p-1.5 text-xs text-slate-900 focus:outline-none dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100" value="${value}" min="0" step="0.1" placeholder="Nilai Diskon" />
-            <button type="button" class="btn-remove-tier text-slate-400 hover:text-red-500 p-1">
-                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
-                </svg>
-            </button>
+            <input type="number" step="any" value="${val}" placeholder="Nilai..." class="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs dark:border-slate-800 dark:bg-slate-900 tier-value" required />
+            <button type="button" onclick="this.parentElement.remove()" class="text-rose-500 hover:text-rose-700 font-bold text-base">&times;</button>
         `;
-
-        div.querySelector('.btn-remove-tier').addEventListener('click', () => div.remove());
         modalContainer.appendChild(div);
     }
 
-    btnAddDiscountTier.addEventListener('click', () => addDiscountTierToModal());
+    document.getElementById('btn-apply-discounts').addEventListener('click', () => {
+        if (activeEditingRowIndex === null) return;
 
-    btnCloseModal.addEventListener('click', () => modal.classList.add('hidden'));
-
-    btnApplyDiscounts.addEventListener('click', () => {
-        if (!activeRowForDiscount) return;
-
-        const discounts = [];
-        modalContainer.querySelectorAll('.discount-tier-row').forEach(row => {
+        const tiers = [];
+        document.querySelectorAll('.modal-discount-tier').forEach(row => {
             const type = row.querySelector('.tier-type').value;
-            const value = parseFloat(row.querySelector('.tier-value').value) || 0;
-            if (value > 0) {
-                discounts.push({ type, value });
+            const val = parseFloat(row.querySelector('.tier-value').value) || 0;
+            if (val > 0) {
+                tiers.push({ type, value: val });
             }
         });
 
-        activeRowForDiscount.querySelector('.row-discounts-json').value = JSON.stringify(discounts);
-        
-        const summaryLabel = activeRowForDiscount.querySelector('.row-discount-summary');
-        if (discounts.length === 0) {
-            summaryLabel.textContent = '0 Diskon';
-        } else {
-            summaryLabel.textContent = discounts.map(d => d.type === 'percent' ? `${d.value}%` : `Rp${d.value.toLocaleString('id-ID')}`).join(' + ');
-        }
+        activeDiscountsMap[activeEditingRowIndex] = tiers;
 
-        validateAndCalculateRow(activeRowForDiscount);
-        modal.classList.add('hidden');
+        const tr = document.getElementById(`item-row-${activeEditingRowIndex}`);
+        const labelBtn = tr.querySelector('.discount-label');
+        labelBtn.textContent = `${tiers.length} Diskon (Set)`;
+        document.getElementById(`discounts-json-${activeEditingRowIndex}`).value = JSON.stringify(tiers);
+
+        discountModal.classList.add('hidden');
+        recalculateRow(activeEditingRowIndex);
     });
 
-    function validateAndCalculateRow(row) {
-        const qty = parseInt(row.querySelector('.row-qty').value) || 0;
-        const price = parseFloat(row.querySelector('.row-price').value) || 0;
-        const discounts = JSON.parse(row.querySelector('.row-discounts-json').value || '[]');
+    function viewTransactionDetail(trx) {
+        document.getElementById('detail-modal-noinv').textContent = trx.no_inv;
+        document.getElementById('detail-modal-cust').textContent = `${trx.cust_code} - ${trx.cust_name}`;
+        document.getElementById('detail-modal-date').textContent = trx.inv_date;
+        document.getElementById('detail-modal-total').textContent = `Rp ${parseInt(trx.total).toLocaleString('id-ID')}`;
 
-        let netPrice = price;
-        discounts.forEach(d => {
-            if (d.type === 'percent') {
-                netPrice = netPrice * (1 - (d.value / 100));
-            } else if (d.type === 'fixed') {
-                netPrice = Math.max(0, netPrice - d.value);
-            }
+        const tbody = document.getElementById('detail-modal-tbody');
+        tbody.innerHTML = '';
+
+        (trx.items || []).forEach(d => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="p-2">${d.product_code} - ${d.product_name}</td>
+                <td class="p-2 text-center">${d.qty}</td>
+                <td class="p-2 text-right">Rp ${parseInt(d.price).toLocaleString('id-ID')}</td>
+                <td class="p-2 text-right">Rp ${parseInt(d.net_price).toLocaleString('id-ID')}</td>
+                <td class="p-2 text-right font-bold text-emerald-600">Rp ${parseInt(d.subtotal).toLocaleString('id-ID')}</td>
+            `;
+            tbody.appendChild(tr);
         });
 
-        const subtotal = netPrice * qty;
-
-        row.querySelector('.row-net-price-input').value = Math.round(netPrice);
-        row.querySelector('.row-net-price-label').textContent = formatRupiah(netPrice);
-
-        row.querySelector('.row-subtotal-input').value = Math.round(subtotal);
-        row.querySelector('.row-subtotal-label').textContent = formatRupiah(subtotal);
-
-        calculateGrandTotal();
+        document.getElementById('detail-modal').classList.remove('hidden');
     }
-
-    function calculateGrandTotal() {
-        let total = 0;
-        let count = 0;
-
-        document.querySelectorAll('.row-subtotal-input').forEach(input => {
-            total += parseFloat(input.value) || 0;
-            count++;
-        });
-
-        summaryTotalItems.textContent = count;
-        summaryGrandTotal.textContent = formatRupiah(total);
-        headerTotalInput.value = Math.round(total);
-    }
-
-    function checkEmptyState() {
-        const rows = tableBody.querySelectorAll('tr');
-        emptyNotice.classList.toggle('hidden', rows.length > 0);
-    }
-
-    function formatRupiah(number) {
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', maximumFractionDigits: 0 }).format(number);
-    }
-});
 </script>

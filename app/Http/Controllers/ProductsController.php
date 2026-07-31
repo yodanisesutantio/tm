@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\M90CAF9;
+use App\Models\MA56F64;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -76,10 +77,12 @@ class ProductsController extends Controller
     {
         $product = M90CAF9::where('uuid', $uuid)->firstOrFail();
 
-        // if ($product->transactions()->exists()) {
-        //     return redirect()->route('app', ['tab' => 'products'])
-        //         ->withErrors(['error' => 'Produk tidak bisa dihapus karena sudah memiliki transaksi.']);
-        // }
+        $hasTransactions = MA56F64::where('product_uuid', $product->uuid)->exists();
+
+        if ($hasTransactions) {
+            return redirect()->route('hub', ['tab' => 'products'])
+                ->with('error', 'Produk tidak bisa dihapus karena sudah digunakan dalam transaksi.');
+        }
 
         $product->delete();
 
